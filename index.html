@@ -3,21 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <title>BlockChain Ass4</title>
+    <title>Staking DApp</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Betting Interface</h1>
-        <form id="betForm">
-            <label for="betAmount">Bet Amount (in Ether):</label>
-            <input type="number" id="betAmount" placeholder="Enter the amount" step="0.01" required>
-            <button type="submit">Place Bet</button>
-        </form>
-        <div id="result"></div>
-    </div>
+    <h1>Staking DApp</h1>
+
+    <h2>Stake Tokens</h2>
+    <label for="stakeAmount">Stake Amount:</label>
+    <input type="number" id="stakeAmount">
+    <button onclick="stakeTokens()">Stake Tokens</button>
+
+    <h2>Withdraw Tokens and Rewards</h2>
+    <button onclick="withdrawTokens()">Withdraw</button>
+
+    <h2>Your Balances</h2>
+    <p id="stakedBalance">Staked Balance: 0</p>
+    <p id="rewardsBalance">Rewards Balance: 0</p>
     
+    <script src="web3.min.js"></script>
     <script src="app.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>

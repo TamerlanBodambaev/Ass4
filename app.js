@@ -1,26 +1,16 @@
-import React, { useState, useEffect } from 'react';
+document.addEventListener('DOMContentLoaded', async () => {
+  // Connect to the Ethereum network using web3.js or ethers.js
+  if (typeof web3 !== 'undefined') {
+      web3 = new Web3(web3.currentProvider);
+  } else {
+      console.error('Web3 provider not found');
+  }
 
-function App() {
-  const [betAmount, setBetAmount] = useState('');
-  const [result, setResult] = useState('');
-  const [web3, setWeb3] = useState(null);
-  const [contract, setContract] = useState(null);
+  // Load the staking contract address and ABI
+  const contractAddress = '0x1f253ECeaF2EBA2f353B4116C84CC48E28fF355f';
+  const contractABI = [ 
 
-  useEffect(() => {
-    async function setupWeb3() {
-      // Проверяем, установлен ли MetaMask
-      if (window.ethereum) {
-        try {
-          // Запрашиваем доступ к учетной записи
-          await window.ethereum.enable();
-          const Web3 = require('web3');
-          const web3Instance = new Web3(window.ethereum);
-          setWeb3(web3Instance);
-
-          // Определите ABI и адрес вашего контракта здесь
-          const contractABI = [
-
-		 pragma solidity ^0.8.0;
+pragma solidity ^0.8.0;
 // SPDX-License-Identifier: MIT
 
 contract Staking {
@@ -80,59 +70,39 @@ contract Staking {
     }
 }
 
-			];  // Замените на ABI вашего контракта
-          const contractAddress = '0x1f253ECeaF2EBA2f353B4116C84CC48E28fF355f';  // Замените на адрес вашего контракта
+]; // Сюда надо добавить Contract
+  const stakingContract = new web3.eth.Contract(contractABI, contractAddress);
 
-          // Инициализируем экземпляр контракта
-          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
-          setContract(contractInstance);
-        } catch (error) {
-          console.error(error);
-        }
-      } else {
-        console.error('MetaMask не найден. Установите его или используйте совместимый браузер.');
-      }
-    }
-
-    setupWeb3();
-  }, []);
-
-  const placeBet = async () => {
-    if (!web3 || !contract) {
-      console.error('Web3 или контракт не инициализированы');
-      return;
-    }
-
-    const betAmountWei = web3.utils.toWei(betAmount, 'ether');
-
-    try {
-      const accounts = await web3.eth.getAccounts();
-      await contract.methods.placeBet().send({
-        from: accounts[0],
-        value: betAmountWei,
-      });
-      setResult('Ставка успешно размещена!');
-    } catch (error) {
-      console.error(error);
-      setResult('Ошибка при размещении ставки.');
-    }
+  // Update user balances
+  const updateBalances = async () => {
+      const stakedBalance = await stakingContract.methods.userBalances(web3.eth.defaultAccount).call();
+      const rewardsBalance = await stakingContract.methods.calculateRewards(web3.eth.defaultAccount).call();
+      document.getElementById('stakedBalance').textContent = `Staked Balance: ${stakedBalance} tokens`;
+      document.getElementById('rewardsBalance').textContent = `Rewards Balance: ${rewardsBalance} tokens`;
   };
 
-  return (
-    <div className="App" style={{ background: 'black', color: 'white' }}>
-      <h1>Интерфейс для ставок</h1>
-      <label htmlFor="betAmount">Сумма ставки (в Ether):</label>
-      <input
-        type="number"
-        id="betAmount"
-        placeholder="Введите сумму"
-        value={betAmount}
-        onChange={(e) => setBetAmount(e.target.value)}
-      />
-      <button onClick={placeBet}>Сделать ставку</button>
-      <div>{result}</div>
-    </div>
-  );
-}
+  // Function to stake tokens
+  const stakeTokens = async () => {
+      const stakeAmount = document.getElementById('stakeAmount').value;
+      if (stakeAmount <= 0) {
+          alert('Please enter a valid stake amount.');
+          return;
+      }
 
-export default App;
+      await stakingContract.methods.stakeTokens(stakeAmount).send({ from: web3.eth.defaultAccount });
+      updateBalances();
+  };
+
+  // Function to withdraw tokens and rewards
+  const withdrawTokens = async () => {
+      await stakingContract.methods.withdrawTokens().send({ from: web3.eth.defaultAccount });
+      updateBalances();
+  };
+
+  // Ensure the user is connected to an Ethereum wallet
+  if (web3.eth.defaultAccount) {
+      updateBalances();
+  } else {
+      alert('Please connect to an Ethereum wallet (e.g., MetaMask).');
+  }
+});
